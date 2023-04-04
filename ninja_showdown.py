@@ -1,232 +1,189 @@
 import tkinter as tk
-from tkinter import filedialog
+from tkinter import ttk
+from tkinter import messagebox
 import pandas as pd
 import random
-import os
-import openpyxl
 
-# Cargamos los datos de los personajes desde el archivo "personajes.xlsx"
-df_personajes = pd.read_excel("personajes.xlsx")
+# Cargar datos de personajes y habilidades
+personajes = pd.read_excel('personajes.xlsx')
+habilidades = pd.read_excel('habilidades.xlsx')
 
-# Cargamos los datos de las habilidades desde el archivo "habilidades.xlsx"
-df_habilidades = pd.read_excel("habilidades.xlsx")
+# Crear ventana principal
+ventana = tk.Tk()
+ventana.title("Juego de simulación de pelea de Naruto")
 
-# Función para cargar los datos de los personajes desde un archivo Excel
-def cargar_personajes():
-    # Abre un cuadro de diálogo para seleccionar el archivo Excel
-    filename = filedialog.askopenfilename(initialdir="./", title="Seleccionar archivo", filetypes=(("Archivos de Excel", "*.xlsx"),))
-    
-    # Lee el archivo Excel y lo convierte en un DataFrame de Pandas
-    df = pd.read_excel(filename)
-    
-    # Actualiza el DataFrame con los datos de los personajes
-    df_personajes = df.copy()
+# Crear frame para seleccionar personajes
+frame_personajes = ttk.Frame(ventana, padding=10)
+frame_personajes.pack()
 
-    # Actualiza la lista de personajes en la GUI
-    listbox.delete(0, tk.END)
-    for index, row in df_personajes.iterrows():
-        listbox.insert(tk.END, row["Nombre"])
+# Crear etiqueta para seleccionar personaje 1
+etiqueta_personaje1 = ttk.Label(frame_personajes, text="Selecciona el Personaje 1:")
+etiqueta_personaje1.grid(column=0, row=0)
 
-# Función para cargar los datos de las habilidades desde un archivo Excel
-def cargar_habilidades():
-    # Abre un cuadro de diálogo para seleccionar el archivo Excel
-    filename = filedialog.askopenfilename(initialdir="./", title="Seleccionar archivo", filetypes=(("Archivos de Excel", "*.xlsx"),))
-    
-    # Lee el archivo Excel y lo convierte en un DataFrame de Pandas
-    df = pd.read_excel(filename)
-    
-    # Actualiza el DataFrame con los datos de las habilidades
-    df_habilidades = df.copy()
+# Crear lista desplegable para seleccionar personaje 1
+opciones_personaje1 = list(personajes['Nombre'])
+seleccion_personaje1 = tk.StringVar()
+opcion_personaje1 = ttk.Combobox(frame_personajes, width=20, textvariable=seleccion_personaje1, values=opciones_personaje1)
+opcion_personaje1.grid(column=1, row=0)
 
-    # Actualiza la lista de habilidades en la GUI
-    listbox.delete(0, tk.END)
-    for index, row in df_habilidades.iterrows():
-        listbox.insert(tk.END, row["Nombre"])
+# Crear etiqueta para seleccionar personaje 2
+etiqueta_personaje2 = ttk.Label(frame_personajes, text="Selecciona el Personaje 2:")
+etiqueta_personaje2.grid(column=0, row=1)
 
-# Función para crear la GUI
-def crear_gui():
-    # Crea una ventana
-    ventana = tk.Tk()
-    ventana.title("Simulador de peleas de Naruto")
-    
-    # Crea una lista para mostrar los personajes y habilidades
-    listbox = tk.Listbox(ventana)
-    listbox.pack(padx=10, pady=10)
+# Crear lista desplegable para seleccionar personaje 2
+opciones_personaje2 = list(personajes['Nombre'])
+seleccion_personaje2 = tk.StringVar()
+opcion_personaje2 = ttk.Combobox(frame_personajes, width=20, textvariable=seleccion_personaje2, values=opciones_personaje2)
+opcion_personaje2.grid(column=1, row=1)
 
-    # Agrega los personajes a la lista
-    for index, row in df_personajes.iterrows():
-        listbox.insert(tk.END, row["Nombre"])
+# Crear botón para avanzar a la selección de habilidades
+boton_personajes = ttk.Button(frame_personajes, text="Siguiente", command=lambda: seleccionar_habilidades())
+boton_personajes.grid(column=1, row=2)
 
-    # Agrega las habilidades a la lista
-    for index, row in df_habilidades.iterrows():
-        listbox.insert(tk.END, row["Nombre"])
+# Función para ocultar el frame de selección de personajes y mostrar el frame de selección de habilidades
+def seleccionar_habilidades():
+    frame_personajes.pack_forget()
+    frame_habilidades.pack()
+    etiqueta_personaje_habilidades.config(text="Selecciona las habilidades para " + seleccion_personaje1.get() + " y " + seleccion_personaje2.get())
 
-    # Crea dos botones para cargar los datos de los personajes y las habilidades
-    cargar_personajes_btn = tk.Button(ventana, text="Cargar datos de personajes", command=cargar_personajes)
-    cargar_personajes_btn.pack(pady=10)
-    
-    cargar_habilidades_btn = tk.Button(ventana, text="Cargar datos de habilidades", command=cargar_habilidades)
-    cargar_habilidades_btn.pack(pady=10)
-    
-    # Inicia el bucle de la ventana
-    ventana.mainloop()
+def seleccionar_habilidades(personajes, habilidades):
+    """
+    Esta función permite al usuario seleccionar las habilidades que cada personaje utilizará durante la pelea.
+    Se calcula la probabilidad de que cada habilidad tenga éxito basándose en los atributos y estadísticas del personaje que la utiliza.
+    Retorna una lista de diccionarios con las habilidades seleccionadas y su probabilidad de éxito.
+    """
+    habilidades_seleccionadas = []
 
-# Llama a la función para crear la GUI
-crear_gui()
+    for personaje in personajes:
+        # Seleccionar habilidades para el personaje actual
+        print(f"\nSelecciona las habilidades para {personaje['Nombre']}:")
+        habilidades_personaje = []
+        for i, habilidad in enumerate(habilidades):
+            print(f"{i+1}. {habilidad['Nombre']} - Chakra: {habilidad['Chakra']} - Daño: {habilidad['Daño']} - Probabilidad de éxito: {habilidad['Probabilidad']}")
+            while True:
+                seleccion = input("Selecciona (S/N): ")
+                if seleccion.upper() == 'S':
+                    habilidades_personaje.append(habilidad)
+                    break
+                elif seleccion.upper() == 'N':
+                    break
+                else:
+                    print("Opción no válida, intenta de nuevo.")
 
+        # Calcular probabilidad de éxito de las habilidades seleccionadas
+        print(f"\nCalculando la probabilidad de éxito para las habilidades de {personaje['Nombre']}...")
+        for habilidad in habilidades_personaje:
+            habilidad['Probabilidad'] = round(habilidad['Probabilidad'] + (personaje['Habilidad'] / 100), 2)
 
-class HabilidadesFrame(tk.Frame):
-    def __init__(self, master, personaje):
-        super().__init__(master)
+        habilidades_seleccionadas.append({
+            'Personaje': personaje['Nombre'],
+            'Habilidades': habilidades_personaje
+        })
 
-        self.personaje = personaje
-        self.habilidades = self.cargar_habilidades()
+    return habilidades_seleccionadas
 
-        self.habilidades_var = {}
-        self.habilidades_costo = {}
-        self.cargar_habilidades_var()
+def calcular_probabilidades(personaje, habilidades):
+    """
+    Calcula la probabilidad de éxito de cada habilidad del personaje
+    basándose en sus atributos y estadísticas.
 
-        tk.Label(self, text=f"Seleccione las habilidades de {self.personaje['Nombre']}").pack(pady=5)
+    Args:
+    - personaje: diccionario con los datos del personaje
+    - habilidades: lista de diccionarios con los datos de las habilidades
 
-        for habilidad, costo in self.habilidades_costo.items():
-            tk.Label(self, text=f"{habilidad} ({costo} chakra)").pack(anchor="w")
-            tk.Checkbutton(self, variable=self.habilidades_var[habilidad]).pack(anchor="w")
-
-        tk.Button(self, text="Simular pelea", command=self.simular_pelea).pack(pady=10)
-
-    def cargar_habilidades(self):
-        habilidades = {}
-
-        workbook = openpyxl.load_workbook(filename='habilidades.xlsx')
-        sheet = workbook.active
-        for row in sheet.iter_rows(min_row=2, values_only=True):
-            habilidades[row[0]] = int(row[1])
-
-        return habilidades
-
-    def cargar_habilidades_var(self):
-        for habilidad in self.habilidades:
-            self.habilidades_var[habilidad] = tk.BooleanVar(value=False)
-            self.habilidades_costo[habilidad] = self.habilidades[habilidad]
-
-    def simular_pelea(self):
-        habilidades_seleccionadas = []
-        chakra_gastado = 0
-
-        for habilidad in self.habilidades_var:
-            if self.habilidades_var[habilidad].get():
-                habilidades_seleccionadas.append(habilidad)
-                chakra_gastado += self.habilidades_costo[habilidad]
-
-        if chakra_gastado > self.personaje["Chakra"]:
-            messagebox.showerror("Error", "No tienes suficiente chakra para realizar esas habilidades.")
-        else:
-            resultado = simular_pelea(self.personaje, habilidades_seleccionadas)
-            mostrar_resultado(resultado)
-            guardar_resultado(resultado)
-
-def mostrar_resultado(resultado):
-    mensaje = f"El ganador de la pelea es {resultado['Ganador']}\n"
-    mensaje += f"{resultado['Perdedor']['Nombre']} quedó con {resultado['Perdedor']['Vida']} puntos de vida"
-
-    messagebox.showinfo("Resultado", mensaje)
-
-def guardar_resultado(resultado):
-    with open("resultado.txt", "w") as file:
-        file.write(f"Ganador: {resultado['Ganador']}\n")
-        file.write(f"Perdedor: {resultado['Perdedor']['Nombre']}\n")
-        file.write(f"Puntos de vida de {resultado['Perdedor']['Nombre']}: {resultado['Perdedor']['Vida']}\n")
-
-def calcular_probabilidades(personaje):
-    # Crear diccionario de probabilidades vacío
+    Returns:
+    - dict: diccionario con las probabilidades de éxito de cada habilidad
+    """
     probabilidades = {}
-    
-    # Calcular probabilidades para cada habilidad
-    for habilidad, costo in personaje['habilidades'].items():
-        # Probabilidad base de la habilidad es igual al costo de chakra
-        probabilidad_base = costo
-        
-        # Modificadores basados en las estadísticas del personaje
-        mod_ninjutsu = (personaje['ninjutsu'] / 10) * 5
-        mod_taijutsu = (personaje['taijutsu'] / 10) * 5
-        mod_genjutsu = (personaje['genjutsu'] / 10) * 5
-        mod_inteligencia = (personaje['inteligencia'] / 10) * 2.5
-        mod_fuerza = (personaje['fuerza'] / 10) * 2.5
-        mod_defensa = (personaje['defensa'] / 10) * 2.5
-        mod_velocidad = (personaje['velocidad'] / 10) * 2.5
-        mod_resistencia = (personaje['resistencia'] / 10) * 2.5
-        
-        # Calcular probabilidad final con modificadores
-        probabilidad_final = probabilidad_base + mod_ninjutsu + mod_taijutsu + mod_genjutsu + mod_inteligencia + mod_fuerza + mod_defensa + mod_velocidad + mod_resistencia
-        
-        # Añadir probabilidad al diccionario de probabilidades
-        probabilidades[habilidad] = probabilidad_final
-        
+    for habilidad in habilidades:
+        # Calcular la probabilidad de éxito de la habilidad
+        prob = (habilidad["nivel"] * 0.2 + personaje["chakra"] * 0.1 + personaje["destreza"] * 0.1
+                + personaje["inteligencia"] * 0.1 + personaje["fuerza"] * 0.1)
+        probabilidades[habilidad["nombre"]] = round(prob, 2)
     return probabilidades
 
-def calcular_golpe(personaje):
-    # Calcular la probabilidad de golpe fuerte y normal
-    prob_golpe_fuerte = calcular_probabilidades(personaje)['golpe fuerte']
-    prob_golpe_normal = calcular_probabilidades(personaje)['golpe normal']
-    
-    # Generar número aleatorio entre 1 y 100
-    num_aleatorio = random.randint(1, 100)
-    
-    # Determinar si el golpe es fuerte o normal
-    if num_aleatorio <= prob_golpe_fuerte:
-        return 'golpe fuerte'
-    elif num_aleatorio <= prob_golpe_normal:
-        return 'golpe normal'
+# Parte 5: Simulación de la pelea
+
+# Crear una lista con los personajes que participarán en la pelea
+peleadores = []
+for i in range(cantidad_peleadores):
+    peleadores.append(personajes_elegidos[i])
+
+# Crear una lista con las habilidades seleccionadas para cada personaje
+habilidades_peleadores = []
+for i in range(cantidad_peleadores):
+    habilidades = []
+    for j in range(cantidad_habilidades):
+        if habilidades_seleccionadas[i][j] == 1:
+            habilidades.append(habilidades_disponibles[j])
+    habilidades_peleadores.append(habilidades)
+
+# Crear una matriz de probabilidades de éxito de las habilidades
+probabilidades_exito = []
+for i in range(cantidad_peleadores):
+    habilidades = habilidades_peleadores[i]
+    probabilidades_personaje = []
+    for j in range(len(habilidades)):
+        habilidad = habilidades[j]
+        probabilidad_exito = calcular_probabilidad_exito(personajes_elegidos[i], habilidad)
+        probabilidades_personaje.append(probabilidad_exito)
+    probabilidades_exito.append(probabilidades_personaje)
+
+# Crear una lista con los resultados de la pelea
+resultados_pelea = []
+for i in range(cantidad_peleadores):
+    resultados_personaje = []
+    for j in range(cantidad_habilidades):
+        if habilidades_seleccionadas[i][j] == 1:
+            resultados_habilidad = []
+            for k in range(cantidad_peleadores):
+                if k != i:
+                    resultado_habilidad = simular_pelea(personajes_elegidos[i], habilidades_disponibles[j], 
+                                                         probabilidades_exito[i][j], peleadores[k])
+                    resultados_habilidad.append(resultado_habilidad)
+            resultados_personaje.append(resultados_habilidad)
+    resultados_pelea.append(resultados_personaje)
+
+# Guardar los resultados en un archivo de texto
+with open("resultados_pelea.txt", "w") as archivo_resultados:
+    for i in range(cantidad_peleadores):
+        archivo_resultados.write("Resultados para " + peleadores[i]["Nombre"] + "\n\n")
+        for j in range(cantidad_habilidades):
+            if habilidades_seleccionadas[i][j] == 1:
+                archivo_resultados.write("Habilidad: " + habilidades_disponibles[j]["Nombre"] + "\n")
+                for k in range(cantidad_peleadores):
+                    if k != i:
+                        archivo_resultados.write("Contra " + peleadores[k]["Nombre"] + ": ")
+                        archivo_resultados.write(str(resultados_pelea[i][j][k]) + "\n")
+                archivo_resultados.write("\n")
+
+def guardar_resultados(resultados):
+    # Pedir al usuario el nombre del archivo de salida
+    nombre_archivo = input("Ingrese el nombre del archivo de salida: ")
+
+    # Verificar si la extensión es .txt o .xlsx
+    if nombre_archivo.endswith('.txt'):
+        with open(nombre_archivo, 'w') as f:
+            # Escribir los resultados en el archivo de texto
+            for r in resultados:
+                f.write(r + '\n')
+        print(f"Resultados guardados en el archivo {nombre_archivo}")
+    elif nombre_archivo.endswith('.xlsx'):
+        # Crear un nuevo archivo de excel
+        workbook = xlsxwriter.Workbook(nombre_archivo)
+
+        # Crear una nueva hoja
+        worksheet = workbook.add_worksheet()
+
+        # Escribir los resultados en la hoja de excel
+        row = 0
+        col = 0
+        for r in resultados:
+            worksheet.write(row, col, r)
+            row += 1
+
+        # Cerrar el archivo de excel
+        workbook.close()
+        print(f"Resultados guardados en el archivo {nombre_archivo}")
     else:
-        return 'falla'
-
-def simular_pelea(jugador1, jugador2):
-    # Inicializar variables
-    chakra_jugador1 = jugador1['Chakra']
-    chakra_jugador2 = jugador2['Chakra']
-    resultado = {'Ganador': None, 'Perdedor': None, 'Razon': None}
-
-    # Mientras ambos jugadores tengan chakra, la pelea continua
-    while chakra_jugador1 > 0 and chakra_jugador2 > 0:
-        # Selección aleatoria de la habilidad de cada jugador
-        habilidad_jugador1 = random.choice(jugador1['Habilidades'])
-        habilidad_jugador2 = random.choice(jugador2['Habilidades'])
-
-        # Cálculo de la probabilidad de éxito de cada habilidad
-        probabilidad_jugador1 = calcular_probabilidad(habilidad_jugador1, jugador1)
-        probabilidad_jugador2 = calcular_probabilidad(habilidad_jugador2, jugador2)
-
-        # El jugador con mayor probabilidad de éxito realiza su habilidad
-        if probabilidad_jugador1 >= probabilidad_jugador2:
-            chakra_jugador2 -= habilidad_jugador1['Costo de chakra']
-            print(f"{jugador1['Nombre']} usa {habilidad_jugador1['Nombre']} y le hace {habilidad_jugador1['Danio']} puntos de daño a {jugador2['Nombre']}")
-        else:
-            chakra_jugador1 -= habilidad_jugador2['Costo de chakra']
-            print(f"{jugador2['Nombre']} usa {habilidad_jugador2['Nombre']} y le hace {habilidad_jugador2['Danio']} puntos de daño a {jugador1['Nombre']}")
-
-    # Determinar el ganador y perdedor de la pelea
-    if chakra_jugador1 > 0:
-        resultado['Ganador'] = jugador1['Nombre']
-        resultado['Perdedor'] = jugador2['Nombre']
-        resultado['Razon'] = f"{jugador2['Nombre']} se quedó sin chakra"
-    else:
-        resultado['Ganador'] = jugador2['Nombre']
-        resultado['Perdedor'] = jugador1['Nombre']
-        resultado['Razon'] = f"{jugador1['Nombre']} se quedó sin chakra"
-
-    return resultado
-
-def guardar_resultados(nombre_archivo, resultado):
-    try:
-        with open(nombre_archivo, 'w') as archivo:
-            archivo.write(f"Resultado de la pelea: {resultado}")
-            print(f"Los resultados de la pelea se han guardado en {nombre_archivo}")
-    except IOError:
-        print("Error al guardar los resultados de la pelea.")
-
-nombre_archivo = input("Ingrese el nombre del archivo para guardar los resultados: ")
-if not nombre_archivo.endswith('.txt'):
-    nombre_archivo += '.txt'
-
-guardar_resultados(nombre_archivo, resultado)
-
+        print("Extensión de archivo no válida. Use .txt o .xlsx")
